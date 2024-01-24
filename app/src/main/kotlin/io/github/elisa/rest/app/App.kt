@@ -3,14 +3,243 @@
  */
 package io.github.elisa.rest.app
 
+import io.github.elisa.rest.app.Color.*
+import io.github.elisa.rest.app.config.BlogConfig
+import io.github.elisa.rest.app.prop.BlogProp
 import io.github.elisa.rest.core.MainCore
 import io.github.elisa.rest.utilities.StringUtils
 
 import org.apache.commons.text.WordUtils
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.runApplication
+import java.io.BufferedReader
+import java.util.*
 
-fun main() {
-    val tokens = StringUtils.split(MessageUtils.getMessage())
-    val result = StringUtils.join(tokens)
-    println(WordUtils.capitalize(result))
-    MainCore().coreMethod();
+// ############################################################################# //
+
+interface Expr
+
+class Num(val value: Int) : Expr
+
+class Sum(val left: Expr, val right: Expr) : Expr
+
+fun eval(e: Expr) : Int {
+    if (e is Num) {
+        val n = e as Num // 불필요한 중복
+        return n.value
+    }
+
+    if (e is Sum) {
+        return eval(e.right) + eval(e.left)
+    }
+
+    throw IllegalArgumentException("Unknown expression")
 }
+
+//fun eval(e: Expr): Int =
+//    when (e) {
+//        is Num ->
+//            e.value
+//        is Sum ->
+//            eval(e.right) + eval(e.left)
+//        else ->
+//            throw IllegalArgumentException("Unknown expression")
+//    }
+
+// ############################################################################# //
+
+enum class Color(var r: Int, var g: Int, val b: Int) {
+    RED(255, 0, 0), ORANGE(255, 165, 0),
+    YELLOW(255, 255, 0), BLUE(0, 0 ,255),
+    GREEN(255, 165, 0);
+
+    fun rgb() = (r * 256 + g) * 256 + b
+}
+
+fun getMnemonic(color: Color) {
+    when (color) {
+        RED -> "A"
+        ORANGE -> "B"
+        YELLOW -> "C"
+        BLUE -> "D"
+        GREEN -> "E"
+    }
+}
+
+//fun getMnemonic(color: Color) {
+//    when (color) {
+//        Color.RED, Color.ORANGE -> "B"
+//        Color.YELLO -> "C"
+//    }
+//}
+
+//fun getMnemonic(color: Color) {
+//    when (color) {
+//        RED, ORANGE -> "B"
+//        YELLO -> "C"
+//    }
+//}
+
+fun mix(c1: Color, c2: Color) =
+    when (setOf(c1, c2)) {
+        setOf(RED, ORANGE) -> ORANGE
+        setOf(YELLOW, BLUE) -> GREEN
+        else -> throw Exception("Dirty color")
+    }
+
+fun mixOptimized(c1: Color, c2: Color) =
+    when {
+        (c1 == RED && c2 == YELLOW) ||
+                (c2 == YELLOW && c2 == RED) ->
+            ORANGE
+        else -> throw Exception("Dirty color")
+    }
+
+// ############################################################################# //
+
+class Person (
+    val name: String,       // 읽기 전용 (비공개 필드 + public getter)
+    var isMarried: Boolean  // 쓸 수 있는 프로퍼티 (비공개 필드 + public getter, setter)
+)
+
+fun max (a: Int, b: Int): Int {
+    return if (a > b) a else b
+}
+
+//fun max (a: Int, b: Int): Int = if (a > b) a else b
+
+//fun max (a: Int, b: Int) = if (a > b) a else b
+
+fun isLetter(c: Char) = c in 'a'..'z' || c in 'A'..'Z'
+
+fun isNotDigit(c: Char) = c !in '0'..'9'
+
+fun recognize(c: Char) = when (c) {
+    in '0'..'9' -> "It`s a digit!"
+    in 'a'..'z', in 'A'..'Z' -> "It`s a letter!"
+    else -> {}
+}
+
+fun readNumber(reader: BufferedReader): Int? {
+    try {
+        val line = reader.readLine()
+        return Integer.parseInt(line)
+    } catch (e: NumberFormatException) {
+        return null
+    } finally {
+        reader.close()
+    }
+}
+
+//fun readNumber (reader: BufferedReader) {
+//    val number = try {
+//        Integer.parseInt(reader.readLine())
+//    } catch (e: NumberFormatException) {
+//        return
+//    }
+//
+//    println(number)
+//}
+
+// ############################################################################# //
+
+enum class Category(val code: String, val desc: String) {
+    GENERAL("G", "일반"),
+    QUESTION("Q", "질문"),
+    INFORMATION("I", "정보"),
+    NOTICE("N", "공지"),
+    CATEGORY_ETC("E", "");
+
+//    open fun of(code: String): Category = entries.find { it.code == code } ?: CATEGORY_ETC;
+}
+
+inline fun <reified T: Enum<T>> T.of(code: String): Array<T> {
+    return enumValues<T>()
+}
+
+// ############################################################################# //
+
+@SpringBootApplication
+@EnableConfigurationProperties(BlogProp::class)
+
+class App
+
+fun main(args: Array<String>) {
+    runApplication<App>(*args)
+}
+
+// ############################################################################# //
+
+//fun main(args: Array<String>) {
+//    val tokens = StringUtils.split(MessageUtils.getMessage())
+//    val result = StringUtils.join(tokens)
+//    println(WordUtils.capitalize(result))
+//    MainCore().coreMethod();
+//
+//    val name = if (args.isNotEmpty()) args[0] else "Kotlin"
+//    println("Hello, $name!");
+//
+//    val category = enumValues<Category>().find { it.code == "G" } ?: Category.CATEGORY_ETC
+//
+//    println(category.desc)
+//
+//    val question = "String"
+//    val answer = 42
+//    val person = Person("Gyunny", true) // 객체 생성할 때 new를 사용하지 않음
+//
+//    println(person.name) // getter 처럼 사용 가능
+//    println(isLetter('q'))     // ture
+//    println(isNotDigit('x'))   // true
+//
+//    val number: Int = 50
+//
+//    val percentage =
+//        if (number in 0..100)
+//            number
+//        else
+//            throw IllegalArgumentException("퍼센트는 0에서 100 사이만 가능!")
+//
+//    if (percentage !in 0..100) {
+//        throw IllegalArgumentException("퍼센트는 0에서 100 사이만 가능!")
+//    }
+//
+////    if (a > b) a else b // Kotlin
+////    a > b ? a : b       // Java
+//
+//    for (x in 1..5) { // 1~5 출력
+//        print(x) // "12345"
+//    }
+//
+//    for (x in 5..1) {
+//        print(x) // 아무것도 출력되지 않음
+//    }
+//
+//    for (x in 5 downTo 1) {
+//        print(x)  // "54321" 역순으로 출력
+//    }
+//
+//    for (x in 1..5 step 2) {
+//        print(x)  // "135"
+//    }
+//
+//    for (x in 5 downTo 1 step 2) {
+//        print(x)  // "531"
+//    }
+//}
+
+//fun main(args: Array<String>) {
+//    runApplication<AusgApplication>(*args)
+//
+//    val binaryReps = TreeMap<Char, String>()
+//
+//    for (c in 'A'..'F') {
+//        val binary = Integer.toBinaryString(c.code)
+//        binaryReps[c] = binary
+//    }
+//
+//    for ((letter, binary) in binaryReps) {
+//        println("$letter = $binary")
+//    }
+//
+//}

@@ -4,7 +4,8 @@
 
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
-    id("org.jetbrains.kotlin.jvm")
+//    id("org.jetbrains.kotlin.jvm")
+    kotlin("jvm")
 }
 
 repositories {
@@ -16,12 +17,13 @@ dependencies {
     constraints {
         // Define dependency versions as constraints
         implementation("org.apache.commons:commons-text:1.10.0")
+        implementation("org.springframework.boot:spring-boot-configuration-processor")
     }
 
     // Use JUnit Jupiter for testing.
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.3")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
 
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -30,6 +32,8 @@ java {
         languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
+
+configurations.forEach { it.exclude("org.hamcrest") }
 
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
